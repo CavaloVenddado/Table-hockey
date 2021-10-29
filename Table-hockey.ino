@@ -1,25 +1,33 @@
 
 //set physical pinout
 #define buzzer_pin 10
-byte segment_buffer[2] = {0, 0};
-const PROGMEM byte seg_pins[7] = {0,0,0,0,0,0,0}; // order gfedcba
-const PROGMEM byte disp_pins[2] = {0,0}; //least significant digit first.
-
+byte segment_buffer[2] = {255, 255};
+const byte seg_pins[7] = {11,12,3,7,4,9,8}; // order gfedcba
+const byte disp_pins[2] = {5,6}; //least significant digit first.
+/*
+ * pin - char
+ * 4 - e
+ * 7 - d
+ * 8 - g
+ * 9 - f
+ * 11 - a
+ * 12 - b
+ * 3 - c
+ */
 //fonts, convert a digit to segments
 const PROGMEM byte digits[] = {
   //gfedcba
-  0b1000000,  // 0
-  0b1111001,  // 1
-  0b0100100,  // 2
-  0b0110000,  // 3
-  0b0011001,  // 4
-  0b0010010,  // 5
-  0b0000010,  // 6
-  0b1011000,  // 7
-  0b0000000,  // 8
-  0b0010000   // 9
+  0b0111111,  // 0
+  0b0000110,  // 1
+  0b1011011,  // 2
+  0b1001111,  // 3
+  0b1100110,  // 4
+  0b1101101,  // 5
+  0b1111101,  // 6
+  0b0100111,  // 7
+  0b1111111,  // 8
+  0b1101111   // 9
 };
-
 void write_segments(byte segments){
   /*
    * a byte stores 8 bits, in this code we set each bit with a specific segment, least significant = a
@@ -38,7 +46,7 @@ void write_segments(byte segments){
    *  LL 
    */
   for (int i = 0; i <= 6; i++) {
-    digitalWrite(bitRead(segments, i), seg_pins[i]);
+    digitalWrite(seg_pins[i], bitRead(segments, i));
   }
 }
 void write_digits(byte n){
@@ -55,7 +63,7 @@ void update_display(){
     //write every segment
     digitalWrite(disp_pins[i], LOW);
     write_segments(segment_buffer[i]);
-    delay(1);
+    delay(1000);
     digitalWrite(disp_pins[i], HIGH);
   }
   //turn off at last segment
@@ -63,6 +71,7 @@ void update_display(){
 }
 
 void setup() {
+  Serial.begin(9600);
   // set pin modes
   pinMode(buzzer_pin, OUTPUT);
   for (int i = 0; i <= 1; i++) {
@@ -77,7 +86,10 @@ void setup() {
   tone(buzzer_pin, 329);
   delay(200);
   tone(buzzer_pin, 391, 200);
-  write_digits(00);
+  //write_digits(00);
+  digitalWrite(disp_pins[0], 1);
+  digitalWrite(disp_pins[1], 1);
+  //write_digits(69);
 }
 
 void loop() {
