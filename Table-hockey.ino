@@ -1,9 +1,15 @@
+#include <Servo.h>
 
 //set physical pinout
 #define buzzer_pin 10
-byte segment_buffer[2] = {255, 255};
+#define esc1_pin 0
+#define esc2_pin 0
+byte segment_buffer[2] = {0,0};
 const byte seg_pins[7] = {11,12,3,7,4,9,8}; // order gfedcba
 const byte disp_pins[2] = {5,6}; //least significant digit first.
+
+Servo esc1;
+Servo esc2;
 /*
  * pin - char
  * 4 - e
@@ -58,20 +64,19 @@ void write_digits(byte n){
 }
 
 void update_display(){
-  //this code writes the buffer to the display, one digit at a time. must run repeatedly for persistance of vision to take effect
+  //this code writes the buffer to the display, one digit at a time. must run repeatedly for persistance of vision to take effect.
   for (int i = 0; i <= 1; i++) {
     //write every segment
-    digitalWrite(disp_pins[i], LOW);
-    write_segments(segment_buffer[i]);
-    delay(1000);
     digitalWrite(disp_pins[i], HIGH);
+    write_segments(segment_buffer[i]);
+    delay(10);//not good prectice. use millis instead.
+    digitalWrite(disp_pins[i], LOW);
   }
   //turn off at last segment
   write_segments(0);
 }
 
 void setup() {
-  Serial.begin(9600);
   // set pin modes
   pinMode(buzzer_pin, OUTPUT);
   for (int i = 0; i <= 1; i++) {
@@ -80,19 +85,19 @@ void setup() {
   for (int i = 0; i <= 6; i++) {
     pinMode(seg_pins[i], OUTPUT);
   }
+
+  esc1.attach(esc1_pin);
+  esc2.attach(esc2_pin);
+  
   // startup chime
   tone(buzzer_pin, 262);
   delay(200);
   tone(buzzer_pin, 329);
   delay(200);
   tone(buzzer_pin, 391, 200);
-  //write_digits(00);
-  digitalWrite(disp_pins[0], 1);
-  digitalWrite(disp_pins[1], 1);
-  //write_digits(69);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  update_display();
+  update_display(); //locks the processor. Could be better.
+  //TODO: detect OnPress event for buttons and for puck detection
 }
