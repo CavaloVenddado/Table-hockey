@@ -1,13 +1,18 @@
 #include <Servo.h>
 
 //set physical pinout
+#define btn_pin 2
 #define buzzer_pin 10
 #define esc1_pin 0
 #define esc2_pin 0
 byte segment_buffer[2] = {0,0};
 const byte seg_pins[7] = {11,12,3,7,4,9,8}; // order gfedcba
 const byte disp_pins[2] = {5,6}; //least significant digit first.
-
+unsigned long current_milis;
+unsigned long press_milis;
+unsigned long release_milis;
+bool last_button_state;
+bool current_button_state;
 Servo esc1;
 Servo esc2;
 /*
@@ -79,6 +84,7 @@ void update_display(){
 void setup() {
   // set pin modes
   pinMode(buzzer_pin, OUTPUT);
+  pinMode(btn_pin, INPUT_PULLUP);
   for (int i = 0; i <= 1; i++) {
     pinMode(disp_pins[i], OUTPUT);
   }
@@ -97,7 +103,22 @@ void setup() {
   tone(buzzer_pin, 391, 200);
 }
 
+void on_press(){
+  
+}
+void on_long_press(){
+  
+}
+
 void loop() {
   update_display(); //locks the processor. Could be better.
   //TODO: detect OnPress event for buttons and for puck detection
+  //get current time and input states.
+  current_milis = millis();
+  current_button_state = !digitalRead(btn_pin);
+  //detect onPress
+  if(current_button_state != last_button_state and current_button_state == true){
+    pressed_time = current_milis;
+  }
+  last_button_state = current_button_state;
 }
