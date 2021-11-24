@@ -1,4 +1,5 @@
 #include <Servo.h>
+#include "pitches.h" 
 
 //set physical pinout
 #define btn_pin 2
@@ -8,13 +9,24 @@
 byte segment_buffer[2] = {0,0};
 const byte seg_pins[7] = {11,12,3,7,4,9,8}; // order gfedcba
 const byte disp_pins[2] = {5,6}; //least significant digit first.
+
+
+//define variables
 unsigned long current_milis;
 unsigned long press_milis;
 unsigned long release_milis;
+unsigned long delta_milis;
+unsigned long game_start_milis;
 bool last_button_state;
 bool current_button_state;
 Servo esc1;
 Servo esc2;
+
+//define game mechaics
+#define long_press_treshold 600 //miliseconds to count as long press
+#define game_time 60000 //miliseconds for game time.
+
+
 /*
  * pin - char
  * 4 - e
@@ -47,7 +59,7 @@ void write_segments(byte segments){
    *    |||||||
    *    gfedcba
    * 
-   * example:
+   * on hardware:
    *  HH 
    * L  L
    * L  L
@@ -83,6 +95,7 @@ void update_display(){
 
 void setup() {
   // set pin modes
+  Serial.begin(9600);//debug
   pinMode(buzzer_pin, OUTPUT);
   pinMode(btn_pin, INPUT_PULLUP);
   for (int i = 0; i <= 1; i++) {
@@ -96,29 +109,61 @@ void setup() {
   esc2.attach(esc2_pin);
   
   // startup chime
-  tone(buzzer_pin, 262);
+  tone(buzzer_pin, NOTE_C4);
   delay(200);
-  tone(buzzer_pin, 329);
+  tone(buzzer_pin, NOTE_E4);
   delay(200);
-  tone(buzzer_pin, 391, 200);
+  tone(buzzer_pin, NOTE_G4, 200);
+  write_digits(00);
 }
 
 void on_press(){
-  
+  Serial.println("SHORT!");
+  tone(buzzer_pin,NOTE_B5,100);
+  delay(100);
+  tone(buzzer_pin,NOTE_E6,500);
+  delay(500);
+  noTone(buzzer_pin);
 }
+
 void on_long_press(){
-  
+  Serial.println("LONG!");
+  tone(buzzer_pin,NOTE_E6,125);
+  delay(130);
+  tone(buzzer_pin,NOTE_G6,125);
+  delay(130);
+  tone(buzzer_pin,NOTE_E7,125);
+  delay(130);
+  tone(buzzer_pin,NOTE_C7,125);
+  delay(130);
+  tone(buzzer_pin,NOTE_D7,125);
+  delay(130);
+  tone(buzzer_pin,NOTE_G7,125);
+  delay(125);
+  noTone(buzzer_pin);
 }
 
 void loop() {
   update_display(); //locks the processor. Could be better.
-  //TODO: detect OnPress event for buttons and for puck detection
   //get current time and input states.
   current_milis = millis();
   current_button_state = !digitalRead(btn_pin);
-  //detect onPress
-  if(current_button_state != last_button_state and current_button_state == true){
-    pressed_time = current_milis;
+  
+  if(current_button_state != last_button_state and current_button_state == true){//detect rising edge on pin (press event)
+    press_milis = current_milis;
+    Serial.println("press");
+  }
+  if(current_button_state != last_button_state and current_button_state == false){//detect falling edge (release event)
+    release_milis = current_milis;
+    delta_milis = release_milis - press_milis; //calculate for how much time the button has been pressed
+    
+    if(delta_milis >= long_press_treshold){
+      on_long_press();
+    }else if(delta_milis > 20){
+      on_press();
+    }
+    Serial.print("release time:");
+    Serial.println(delta_milis);
   }
   last_button_state = current_button_state;
 }
